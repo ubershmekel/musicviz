@@ -1,3 +1,10 @@
+"""
+* RMS volume affects the brightness of the image
+* Progress in sound file resets brightness of each pixel in order top-to-bottom to communicate remaining duration
+
+Completes in about a minute on my machine.
+"""
+
 import subprocess
 import sys
 import os
