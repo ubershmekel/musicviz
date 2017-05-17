@@ -57,7 +57,10 @@ width, height = 16, 16
 pixel_count_per_image = width * height
 top = 0
 base_image = Image.open(image_fname)
-enhancer = ImageEnhance.Brightness(base_image)
+img = base_image.copy()
+im_data = np.array(base_image)#base_image.getdata()
+percent_step = 1.0 / len(averages)
+pixel_count = len(im_data)
 for j, avg in enumerate(tqdm.tqdm(averages)):
     normal_val = (avg - sample_min) * 1.0 / sample_peak_to_peak
     pixel_val = int(normal_val * 254.0)
@@ -67,11 +70,17 @@ for j, avg in enumerate(tqdm.tqdm(averages)):
     #data = [ (pixel_val, pixel_val, pixel_val) ] * pixel_count_per_image
     #img = Image.new('RGB', (width, height))
     #img.putdata(data)
-    img = enhancer.enhance(normal_val)
+    new_data = (np.array(im_data) * normal_val).astype(np.uint8)
+    offset = pixel_count * percent_step * j
+    new_data[:offset] = im_data[:offset]
+    #shaped = new_data.astype(np.int8).reshape(base_image.shape + (base_image.bands,))
+    #img.putdata(im_data)
+    img = Image.fromarray(new_data)
+    #img.fromarray(new_data)
     img.save(output_folder + '/image%05d.jpg' % j)
 
-
-ffmpeg_fmt = 'ffmpeg -i {wav_fname} -framerate {fps} -i {output_folder}/image%05d.jpg -vf scale=320:240 output.mp4'
+#  -vf scale=320:240
+ffmpeg_fmt = 'ffmpeg -y -i {wav_fname} -framerate {fps} -i {output_folder}/image%05d.jpg output.mp4'
 cmd = ffmpeg_fmt.format(wav_fname=wav_fname,
                         output_folder=output_folder,
                         fps=fps)
